@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const userSchema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 const betSchema = new Schema(
   {
@@ -91,6 +91,14 @@ const betSchema = new Schema(
       type: String,
       default: 0,
     },
+
+    // When the bet was settled (result determined)
+    settledAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
+
+module.exports = new mongoose.model('Bet', betSchema);

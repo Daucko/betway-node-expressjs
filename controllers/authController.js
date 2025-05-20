@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { sendForgetPasswordEMail } = require('../config/sendMail');
 
 const handleRegistration = async (req, res) => {
   const { username, email, password } = req.body;
@@ -27,6 +28,8 @@ const handleRegistration = async (req, res) => {
       email,
       password: hashedPassword,
     });
+
+    // Send verification email to user
 
     res.status(201).json({
       message: `User ${username} created successfully`,
@@ -88,4 +91,48 @@ const handleLogin = async (req, res) => {
   }
 };
 
-module.exports = { handleRegistration, handleLogin };
+const handleForgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+  const user = await User.findOne({ email });
+  if (!user)
+    return res
+      .status(404)
+      .json({ message: `User with the email ${email} not found` });
+  try {
+    // send email with token to the user
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_TOKEN,
+      {
+        expiresIn: '5m',
+      }
+    );
+
+    await sendForgetPasswordEMail(email, accessToken);
+    res.status(200).json({ message: 'Please check your email inbox' });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server issues' });
+  }
+};
+
+const handleResetPassword = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user)
+    return res.status(404).json({ message: 'User account not found!' });
+
+  const hashedPassword = bcrypt.hash(password, 12);
+  user.password = hashedPassword;
+  await user.save();
+  res.status(200).json({ message: 'Password reset successful' });
+};
+
+module.exports = {
+  handleRegistration,
+  handleLogin,
+  handleForgotPassword,
+  handleResetPassword,
+};

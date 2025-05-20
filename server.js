@@ -37,6 +37,7 @@ app.use('/auth', require('./routes/auth'));
 
 app.use(verifyJWT);
 app.use('/games', require('./routes/games'));
+app.use('/bets', require('./routes/bets'));
 
 mongoose.connection.once('open', () => {
   console.log('Connected to MongDB...');
