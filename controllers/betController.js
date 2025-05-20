@@ -274,4 +274,88 @@ const placeNewBet = async (req, res) => {
   }
 };
 
-module.exports = { getAllBets, placeNewBet };
+const getSingleBet = async (req, res) => {
+  try {
+    const betId = req.params.id;
+
+    const bet = await Bet.findById(betId)
+      .populate({
+        path: 'game',
+        select: 'homeTeam awayTeam sport startTime status result',
+      })
+      .populate({
+        path: 'user',
+        select: 'username',
+      });
+
+    if (!bet) return res.status(404).json({ message: 'Bet not Found' });
+
+    // Ensure user can only access their own bets (unless admin)
+    if (bet.user._id.toString() !== req.user.id && !req.user.isAdmin)
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to view this bet' });
+
+    res.status(200).json(bet);
+  } catch (err) {
+    console.error('Error fetching bet:', err);
+    res.status(500).json({ message: err.message || 'Server Error' });
+  }
+};
+
+const cancelBet = async (req, res) => {
+  try {
+    const betId = req.params.id;
+
+    // Find the bet by ID
+    const bet = await Bet.findById(betId);
+
+    if (!bet) return res.status(404).json({ message: 'Bet not found' });
+
+    // Ensure user can only cancel their own bets (unless admin)
+    if (bet.user.toString() !== req.user.id && !req.user.isAdmin)
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to cancel this bet' });
+
+    // Only pending bets can be cancelled
+    if (bet.status !== 'pending')
+      return res
+        .status(400)
+        .json({ message: 'Only pending bets can be cancelled' });
+
+    const game = await Game.findById(bet.game);
+
+    // Check if game has already started
+    if (game && new Date(game.startTime) <= new Date())
+      return res
+        .status(400)
+        .json({ message: 'Cannot cancel bet after game has started' });
+
+    // Update bet status to cancelled
+    bet.status = 'cancelled';
+    await bet.save();
+
+    // Refund the stake to user wallet
+    const user = await User.findById(req.user.id);
+    user.wallet.ballance += bet.stake;
+
+    // Record the refund transaction
+    user.wallet.transaction.push({
+      type: 'withdrawal',
+      amount: bet.stake.amount,
+      description: `Refund for cancelled bet on ${
+        game ? game.homeTeam + ' vs ' + game.awayTeam : 'unknown game'
+      }`,
+    });
+
+    await user.save();
+
+    res.status(200).json({ message: 'Bet cancelled and stake refunded' });
+  } catch (err) {
+    console.error('Error cancelling bet:', err);
+    res.status(500).json({ message: err.message || 'Server Error' });
+  }
+};
+
+module.exports = { getAllBets, placeNewBet, getSingleBet, cancelBet };
