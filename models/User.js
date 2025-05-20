@@ -24,9 +24,29 @@ const userSchema = new Schema(
       required: [true, 'Please add a password'],
       minlength: [6, 'Password must be at least 6 characters'],
     },
-    walletBallance: {
-      type: Number,
-      default: 500,
+    wallet: {
+      balance: {
+        type: Number,
+        default: 1000, // Start with 1000 virtual coins
+      },
+      transactions: [
+        {
+          type: {
+            type: String,
+            enum: ['deposit', 'withdrawal', 'bet', 'win'],
+            required: true,
+          },
+          amount: {
+            type: Number,
+            required: true,
+          },
+          description: String,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
     },
     refreshToken: String,
     _isAdmin: {

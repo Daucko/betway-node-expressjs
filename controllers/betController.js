@@ -1,5 +1,6 @@
 const Game = require('../models/Game');
 const Bet = require('../models/Bet');
+const User = require('../models/User');
 
 const getAllBets = async (req, res) => {
   try {
@@ -189,10 +190,88 @@ const placeNewBet = async (req, res) => {
       case 'awayWinOrDraw':
         betOdds = game.odds.awayWinOrDraw;
         break;
+
+      // Special bets that need additional value parameter
+      case 'correctScore':
+        if (!outcomeValue)
+          return res
+            .status(400)
+            .json({ message: 'Please provide a correct score value' });
+        betOdds = game.odds.correctScore.get(outcomeValue);
+        break;
+
+      case 'halfTimeFullTime':
+        if (!outcomeValue)
+          return res
+            .status(400)
+            .json({ message: 'Half time/Full time value is required' });
+        betOdds = game.odds.haltTimeFullTime.get(outcomeValue);
+        break;
+
+      default:
+        return res.status(400).json({ message: 'Invalid bet type' });
     }
+
+    // Verify odds are available for this bet
+    if (!betOdds)
+      return res.status(400).json({
+        message: `${outcomeType} betting is not available for this game`,
+      });
+
+    // Check user wallet ballance
+    const user = await User.findById(req.user.id);
+
+    if (user.wallet.balance < stake)
+      return res
+        .status(400)
+        .json({ message: 'Insufficient funds in your wallet' });
+
+    // Calculate potential payout
+    const potentialPayout = parseFloat((stake * betOdds).toFixed(2));
+
+    // Create new bet
+    const bet = await Bet.create({
+      user: req.user.id,
+      game: gameId,
+      outcome: {
+        type: outcomeType,
+        value: outcomeValue || null,
+        odds: betOdds,
+      },
+      stake,
+      payout: {
+        potential: potentialPayout,
+        actual: 0,
+      },
+      status: 'pending',
+    });
+
+    // Update user wallet
+    user.wallet.ballance -= stake;
+
+    // Add transaction to user wallet
+    user.wallet.transactions.push({
+      type: 'bet',
+      amount: -stake,
+      description: `${outcomeType} bet on ${game.homeTeam} vs ${game.awayTeam}`,
+    });
+
+    await user.save();
+
+    // Populate game details in the bet response
+    const populatedBet = await Bet.findById(bet._id).populate(
+      'game',
+      'homeTeam awayTeam sport startTime'
+    );
+
+    res.status(201).json({
+      message: 'Bet placed successfully',
+      data: populatedBet,
+    });
   } catch (err) {
+    console.log('Error placing bet:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
-module.exports = { getAllBets };
+module.exports = { getAllBets, placeNewBet };
