@@ -9,4 +9,6 @@ router
   .get(betController.getSingleBet)
   .delete(betController.cancelBet);
 
+router.get('/stats/summary', betController.getBettingStatistics);
+
 module.exports = router;

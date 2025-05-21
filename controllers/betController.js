@@ -358,4 +358,83 @@ const cancelBet = async (req, res) => {
   }
 };
 
-module.exports = { getAllBets, placeNewBet, getSingleBet, cancelBet };
+const getBettingStatistics = async (req, res) => {
+  try {
+    const user = req.user.id;
+    
+    // Get all user bets
+    const bets = await Bet.find({ user });
+
+    if (!bets.length) {
+      return res.status(200).json({ 
+        message: 'No bets found for this user',
+        data: {
+          totalBets: 0,
+          wonBets: 0,
+          lostBets: 0,
+          pendingBets: 0,
+          cancelledBets: 0,
+          winRate: 0,
+          totalStaked: 0,
+          totalWon: 0,
+          profitLoss: 0,
+          roi: 0,
+          avgOdds: 0
+        }
+      });
+    }
+
+    // Calculate bet counts by status
+    const wonBets = bets.filter(bet => bet.status === 'won').length;
+    const lostBets = bets.filter(bet => bet.status === 'lost').length;
+    const pendingBets = bets.filter(bet => bet.status === 'pending').length;
+    const cancelledBets = bets.filter(bet => bet.status === 'cancelled').length;
+    const totalBets = bets.length;
+
+    // Financial calculations
+    const totalStaked = bets
+      .filter(bet => bet.status !== 'cancelled')
+      .reduce((sum, bet) => sum + bet.stake.amount, 0);
+
+    const totalWon = bets
+      .filter(bet => bet.status === 'won')
+      .reduce((sum, bet) => sum + bet.payout.actual, 0);
+
+    const profitLoss = totalWon - totalStaked;
+    const roi = totalStaked > 0 ? (profitLoss / totalStaked) * 100 : 0;
+
+    // Average odds (only for settled bets - won or lost)
+    const settledBets = bets.filter(bet => ['won', 'lost'].includes(bet.status));
+    const avgOdds = settledBets.length > 0
+      ? settledBets.reduce((sum, bet) => sum + bet.outcome.odds, 0) / settledBets.length
+      : 0;
+
+    // Win rate (only calculated on settled bets)
+    const settledBetsCount = wonBets + lostBets;
+    const winRate = settledBetsCount > 0 
+      ? (wonBets / settledBetsCount) * 100 
+      : 0;
+
+    res.status(200).json({
+      data: {
+        totalBets,
+        wonBets,
+        lostBets,
+        pendingBets,
+        cancelledBets,
+        winRate: parseFloat(winRate.toFixed(2)),
+        totalStaked: parseFloat(totalStaked.toFixed(2)),
+        totalWon: parseFloat(totalWon.toFixed(2)),
+        profitLoss: parseFloat(profitLoss.toFixed(2)),
+        roi: parseFloat(roi.toFixed(2)),
+        avgOdds: parseFloat(avgOdds.toFixed(2))
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching bet statistics:', err);
+    res.status(500).json({ message: err.message || 'Server Error' });
+  }
+};
+
+
+module.exports = { getAllBets, placeNewBet, getSingleBet, cancelBet, getBettingStatistics };
