@@ -9,5 +9,6 @@ router
   .post(verifyAdmin, gameController.createGame);
 
 router.get('/:id', gameController.getSingleGame);
+router.patch('/:id/result', verifyAdmin, gameController.updateGameResult);
 
 module.exports = router;
