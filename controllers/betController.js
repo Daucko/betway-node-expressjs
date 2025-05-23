@@ -134,7 +134,7 @@ const placeNewBet = async (req, res) => {
 
     // Check whether the game has already started
     if (new Date(game.startTime) <= new Date())
-      return res.status(400).json({ message: 'This gane has already started' });
+      return res.status(400).json({ message: 'This game has already started' });
 
     // Get the odd of the selected game
     let betOdds;
@@ -247,7 +247,7 @@ const placeNewBet = async (req, res) => {
     });
 
     // Update user wallet
-    user.wallet.ballance -= stake;
+    user.wallet.balance -= stake;
 
     // Add transaction to user wallet
     user.wallet.transactions.push({
@@ -361,12 +361,12 @@ const cancelBet = async (req, res) => {
 const getBettingStatistics = async (req, res) => {
   try {
     const user = req.user.id;
-    
+
     // Get all user bets
     const bets = await Bet.find({ user });
 
     if (!bets.length) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: 'No bets found for this user',
         data: {
           totalBets: 0,
@@ -379,41 +379,46 @@ const getBettingStatistics = async (req, res) => {
           totalWon: 0,
           profitLoss: 0,
           roi: 0,
-          avgOdds: 0
-        }
+          avgOdds: 0,
+        },
       });
     }
 
     // Calculate bet counts by status
-    const wonBets = bets.filter(bet => bet.status === 'won').length;
-    const lostBets = bets.filter(bet => bet.status === 'lost').length;
-    const pendingBets = bets.filter(bet => bet.status === 'pending').length;
-    const cancelledBets = bets.filter(bet => bet.status === 'cancelled').length;
+    const wonBets = bets.filter((bet) => bet.status === 'won').length;
+    const lostBets = bets.filter((bet) => bet.status === 'lost').length;
+    const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
+    const cancelledBets = bets.filter(
+      (bet) => bet.status === 'cancelled'
+    ).length;
     const totalBets = bets.length;
 
     // Financial calculations
     const totalStaked = bets
-      .filter(bet => bet.status !== 'cancelled')
+      .filter((bet) => bet.status !== 'cancelled')
       .reduce((sum, bet) => sum + bet.stake.amount, 0);
 
     const totalWon = bets
-      .filter(bet => bet.status === 'won')
+      .filter((bet) => bet.status === 'won')
       .reduce((sum, bet) => sum + bet.payout.actual, 0);
 
     const profitLoss = totalWon - totalStaked;
     const roi = totalStaked > 0 ? (profitLoss / totalStaked) * 100 : 0;
 
     // Average odds (only for settled bets - won or lost)
-    const settledBets = bets.filter(bet => ['won', 'lost'].includes(bet.status));
-    const avgOdds = settledBets.length > 0
-      ? settledBets.reduce((sum, bet) => sum + bet.outcome.odds, 0) / settledBets.length
-      : 0;
+    const settledBets = bets.filter((bet) =>
+      ['won', 'lost'].includes(bet.status)
+    );
+    const avgOdds =
+      settledBets.length > 0
+        ? settledBets.reduce((sum, bet) => sum + bet.outcome.odds, 0) /
+          settledBets.length
+        : 0;
 
     // Win rate (only calculated on settled bets)
     const settledBetsCount = wonBets + lostBets;
-    const winRate = settledBetsCount > 0 
-      ? (wonBets / settledBetsCount) * 100 
-      : 0;
+    const winRate =
+      settledBetsCount > 0 ? (wonBets / settledBetsCount) * 100 : 0;
 
     res.status(200).json({
       data: {
@@ -427,8 +432,8 @@ const getBettingStatistics = async (req, res) => {
         totalWon: parseFloat(totalWon.toFixed(2)),
         profitLoss: parseFloat(profitLoss.toFixed(2)),
         roi: parseFloat(roi.toFixed(2)),
-        avgOdds: parseFloat(avgOdds.toFixed(2))
-      }
+        avgOdds: parseFloat(avgOdds.toFixed(2)),
+      },
     });
   } catch (err) {
     console.error('Error fetching bet statistics:', err);
@@ -436,5 +441,10 @@ const getBettingStatistics = async (req, res) => {
   }
 };
 
-
-module.exports = { getAllBets, placeNewBet, getSingleBet, cancelBet, getBettingStatistics };
+module.exports = {
+  getAllBets,
+  placeNewBet,
+  getSingleBet,
+  cancelBet,
+  getBettingStatistics,
+};
