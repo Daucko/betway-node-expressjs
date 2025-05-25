@@ -9,10 +9,14 @@ router
   .post(betController.placeNewBet);
 
 router
-  .route('bets/:id')
+  .route('/bets/:id')
   .get(verifyJWT, betController.getSingleBet)
   .delete(verifyJWT, betController.cancelBet);
 
-router.get('bets/stats/summary', verifyJWT, betController.getBettingStatistics);
+router.get(
+  '/bets/stats/summary',
+  verifyJWT,
+  betController.getBettingStatistics
+);
 
 module.exports = router;

@@ -5,13 +5,13 @@ const verifyAdmin = require('../middleware/verifyAdmin');
 const verifyJWT = require('../middleware/verifyJWT');
 
 router
-  .route('/')
+  .route('/games')
   .get(verifyJWT, gameController.getAllGames)
   .post(verifyJWT, verifyAdmin, gameController.createGame);
 
-router.get('/:id', verifyJWT, gameController.getSingleGame);
+router.get('/games/:id', verifyJWT, gameController.getSingleGame);
 router.patch(
-  '/:id/result',
+  '/games/:id/result',
   verifyJWT,
   verifyAdmin,
   gameController.updateGameResult
