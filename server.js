@@ -5,6 +5,7 @@ const cors = require('cors');
 const verifyJWT = require('./middleware/verifyJWT');
 const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn');
+const allowedOrigins = require('./config/allowedOrigins');
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
@@ -14,11 +15,7 @@ connectDB();
 // app.use(cors(corsOptions));
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'https://mindful-task-manager-app.lovable.app',
-      'https://your-production-domain.com',
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
