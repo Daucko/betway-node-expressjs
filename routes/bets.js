@@ -5,8 +5,8 @@ const verifyJWT = require('../middleware/verifyJWT');
 
 router
   .route('/bets')
-  .get(betController.getAllBets)
-  .post(betController.placeNewBet);
+  .get(verifyJWT, betController.getAllBets)
+  .post(verifyJWT, betController.placeNewBet);
 
 router
   .route('/bets/:id')
