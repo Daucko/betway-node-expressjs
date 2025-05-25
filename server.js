@@ -2,10 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const verifyJWT = require('./middleware/verifyJWT');
 const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn');
 const allowedOrigins = require('./config/allowedOrigins');
+const Routes = require('./routes/index');
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
@@ -25,18 +25,16 @@ app.use(
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  console.log('✅ - Hitting GET method!');
-  res.sendStatus(200);
+  res.status(200).json({ message: '✅ Welcome to betwise API!' });
 });
 
 // Routes
-app.use('/auth', require('./routes/auth'));
-app.use('/logout', require('./routes/logout'));
+app.use('/api', Routes);
 
-app.use(verifyJWT);
-app.use('/games', require('./routes/games'));
-app.use('/bets', require('./routes/bets'));
-app.use('/wallet', require('./routes/wallet'));
+app.all(/.*/, (req, res) => {
+  res.status(404).json({ error: '404 Not Found' });
+  console.log(`❌ - ${req.method} ${req.originalUrl} not found`);
+});
 
 mongoose.connection.once('open', () => {
   console.log('Connected to MongDB...');
