@@ -3,13 +3,16 @@ const router = express.Router();
 const betController = require('../controllers/betController');
 const verifyJWT = require('../middleware/verifyJWT');
 
-router.route('/').get(betController.getAllBets).post(betController.placeNewBet);
+router
+  .route('/bets')
+  .get(betController.getAllBets)
+  .post(betController.placeNewBet);
 
 router
-  .route('/:id')
+  .route('bets/:id')
   .get(verifyJWT, betController.getSingleBet)
   .delete(verifyJWT, betController.cancelBet);
 
-router.get('/stats/summary', verifyJWT, betController.getBettingStatistics);
+router.get('bets/stats/summary', verifyJWT, betController.getBettingStatistics);
 
 module.exports = router;
