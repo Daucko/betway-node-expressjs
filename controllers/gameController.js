@@ -277,22 +277,113 @@ const processBets = async (gameId) => {
   }
 };
 
-// Get all finished games with results
-const getResults = async (req, res) => {
+const getGameResults = async (req, res) => {
   try {
-    // Find all games with status 'finished' and a non-null result
-    const games = await Game.find({
-      status: 'finished',
-      'result.outcome': { $ne: null },
-    });
+    // Find finished games with results
+    const games = await Game.find({ status: 'finished' })
+      .sort({ startTime: -1 })
+      .select('homeTeam awayTeam sport startTime result odds status');
+
     if (!games || games.length === 0) {
-      return res
-        .status(204)
-        .json({ message: 'No finished games with results found' });
+      return res.status(404).json({ message: 'No finished games found' });
     }
-    res.status(200).json(games);
+
+    // Format response with results summary
+    const formattedResults = games.map((game) => ({
+      id: game._id,
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      sport: game.sport,
+      startTime: game.startTime,
+      result: {
+        outcome: game.result.outcome,
+        score: `${game.result.homeScore} - ${game.result.awayScore}`,
+        homeScore: game.result.homeScore,
+        awayScore: game.result.awayScore,
+        totalGoals: game.result.totalGoals,
+        btts: game.result.btts,
+        halfTimeScore:
+          game.result.halfTimeHomeScore !== null &&
+          game.result.halfTimeAwayScore !== null
+            ? `${game.result.halfTimeHomeScore} - ${game.result.halfTimeAwayScore}`
+            : null,
+        description: game.result.description || '',
+      },
+      odds: game.odds,
+    }));
+
+    res.status(200).json({
+      message: 'Game results retrieved successfully',
+      data: formattedResults,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error fetching game results:', err);
+    res.status(500).json({ message: err.message || 'Server Error' });
+  }
+};
+
+// Additional function to get a single game result by ID
+const getSingleGameResult = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({ message: 'Game ID is required' });
+    }
+
+    const game = await Game.findById(id);
+
+    if (!game) {
+      return res.status(404).json({ message: `No game found with ID ${id}` });
+    }
+
+    if (game.status !== 'finished') {
+      return res.status(400).json({
+        message: 'Game has not finished yet',
+        gameStatus: game.status,
+      });
+    }
+
+    // Format detailed result response
+    const detailedResult = {
+      id: game._id,
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      sport: game.sport,
+      startTime: game.startTime,
+      status: game.status,
+      odds: game.odds,
+      result: {
+        outcome: game.result.outcome,
+        finalScore: {
+          home: game.result.homeScore,
+          away: game.result.awayScore,
+          display: `${game.result.homeScore} - ${game.result.awayScore}`,
+        },
+        halfTimeScore:
+          game.result.halfTimeHomeScore !== null &&
+          game.result.halfTimeAwayScore !== null
+            ? {
+                home: game.result.halfTimeHomeScore,
+                away: game.result.halfTimeAwayScore,
+                display: `${game.result.halfTimeHomeScore} - ${game.result.halfTimeAwayScore}`,
+              }
+            : null,
+        statistics: {
+          totalGoals: game.result.totalGoals,
+          bothTeamsScored: game.result.btts,
+        },
+        description: game.result.description || '',
+      },
+    };
+
+    res.status(200).json({
+      message: 'Game result retrieved successfully',
+      data: detailedResult,
+    });
+  } catch (err) {
+    console.error('Error fetching single game result:', err);
+    res.status(500).json({ message: err.message || 'Server Error' });
   }
 };
 
@@ -301,5 +392,6 @@ module.exports = {
   createGame,
   getSingleGame,
   updateGameResult,
-  getResults,
+  getGameResults,
+  getSingleGameResult,
 };
