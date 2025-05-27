@@ -10,10 +10,10 @@ router
   .post(verifyJWT, verifyAdmin, gameController.createGame);
 
 router.get('/games/:id', verifyJWT, gameController.getSingleGame);
+router.get('/games/results', verifyJWT, gameController.getGameResults);
 router
   .route('/games/:id/result')
   .get(verifyJWT, gameController.getSingleGameResult)
   .patch(verifyJWT, verifyAdmin, gameController.updateGameResult);
-router.get('/games/results', verifyJWT, gameController.getGameResults);
 
 module.exports = router;
