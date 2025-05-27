@@ -16,5 +16,6 @@ router.patch(
   verifyAdmin,
   gameController.updateGameResult
 );
+router.get('/games/results', verifyJWT, gameController.getResults);
 
 module.exports = router;

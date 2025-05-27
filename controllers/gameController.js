@@ -277,4 +277,29 @@ const processBets = async (gameId) => {
   }
 };
 
-module.exports = { getAllGames, createGame, getSingleGame, updateGameResult };
+// Get all finished games with results
+const getResults = async (req, res) => {
+  try {
+    // Find all games with status 'finished' and a non-null result
+    const games = await Game.find({
+      status: 'finished',
+      'result.outcome': { $ne: null },
+    });
+    if (!games || games.length === 0) {
+      return res
+        .status(204)
+        .json({ message: 'No finished games with results found' });
+    }
+    res.status(200).json(games);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getAllGames,
+  createGame,
+  getSingleGame,
+  updateGameResult,
+  getResults,
+};
