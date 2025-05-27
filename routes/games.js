@@ -9,8 +9,8 @@ router
   .get(verifyJWT, gameController.getAllGames)
   .post(verifyJWT, verifyAdmin, gameController.createGame);
 
-router.get('/games/:id', verifyJWT, gameController.getSingleGame);
 router.get('/games/results', verifyJWT, gameController.getGameResults);
+router.get('/games/:id', verifyJWT, gameController.getSingleGame);
 router
   .route('/games/:id/result')
   .get(verifyJWT, gameController.getSingleGameResult)
