@@ -77,7 +77,6 @@ const handleLogin = async (req, res) => {
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
     const result = await foundUser.save();
-    console.log(result);
     // Send the refreshToken in cookie
     res.cookie('jwt', refreshToken, {
       httpOnly: true,
