@@ -29,7 +29,24 @@ const handleRegistration = async (req, res) => {
       password: hashedPassword,
     });
 
-    // Send verification email to user
+    // Send verification otp to user email
+
+    // Send a welcome greeting to the user
+    const homepageUrl =
+      process.env.HOMEPAGE_URL || 'https://your-app-homepage.com';
+    const subject = 'Welcome to Betwise!';
+    const message = `
+      <h1>Hi ${username},<br><br>
+      Welcome to Betwise! We're excited to have you on board.<br><br>
+      Get started by visiting our homepage: <a href="${homepageUrl}">${homepageUrl}</a><br><br>
+      Happy betting!<br>
+      The Betwise Team</h1>
+    `;
+    await sendForgetPasswordEMail(email, message, subject);
+
+    // Set user as verified if mail goes through
+    user._isVerified = true;
+    await user.save();
 
     res.status(201).json({
       message: `User ${username} created successfully`,
@@ -113,7 +130,13 @@ const handleForgotPassword = async (req, res) => {
       }
     );
 
-    await sendForgetPasswordEMail(email, accessToken);
+    const message = `<h1>Here is the token to reset you password please click on the button,
+        <a class="" href='https://www.yourcareerex.com/reset-password/${accessToken}'>Reset Password </a>
+        if the button does not work for any reason, please click the link below
+        <a href='https://www.yourcareerex.com/reset-password/${accessToken}'>Reset Password </a>
+        </h1>`;
+    const subject = 'Reset Password';
+    await sendForgetPasswordEMail(email, message, subject);
     res.status(200).json({ message: 'Please check your email inbox' });
   } catch (err) {
     res.status(500).json({ message: 'Internal server issues' });

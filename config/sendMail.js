@@ -1,6 +1,10 @@
 const nodemailer = require('nodemailer');
 
-const sendForgetPasswordEMail = async (email, token) => {
+const sendForgetPasswordEMail = async (
+  email,
+  message,
+  subject = 'Reset Password'
+) => {
   try {
     const mailTransport = nodemailer.createTransport({
       service: 'gmail',
@@ -12,23 +16,15 @@ const sendForgetPasswordEMail = async (email, token) => {
     const mailDetails = {
       from: `${process.env.EMAIL}`,
       to: `${email}`,
-      subject: 'Reset Password',
-      html: `<h1 style="color: #2563eb;">Here is the token to reset you password please click on the button,
-          
-          <a  href='https://www.yourcareerex.com/reset-password/${token}'>Reset Password </a>
-
-          if the button does not work for any reason, please click the link below
-
-           <a href='https://www.yourcareerex.com/reset-password/${token}'>Reset Password </a>
-          ${token}
-          
-          </h1>`,
+      subject: subject,
+      html: `<div style="font-family: Arial, sans-serif; font-size: 16px; color: #222;">${message}</div>`,
     };
 
     await mailTransport.sendMail(mailDetails);
   } catch (error) {
     console.log('Error sending email:', error);
-    res.status(500).json({ message: 'Failed to send email' });
+    // Optionally, throw error to be handled by the caller
+    throw error;
   }
 };
 

@@ -13,7 +13,7 @@ const betSchema = new Schema(
     // Game the bet is placed on
     game: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Game',
+      ref: 'Game', 
       required: [true, 'Game ID is required'],
     },
 

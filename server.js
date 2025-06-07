@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn');
 const allowedOrigins = require('./config/allowedOrigins');
 const Routes = require('./routes/index');
+const cookieParser = require('cookie-parser');
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
@@ -23,6 +24,7 @@ app.use(
 );
 // Built-in middleware for json
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: '✅ Welcome to betwise API!' });
