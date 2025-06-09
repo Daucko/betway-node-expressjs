@@ -149,6 +149,11 @@ const handleForgotPassword = async (req, res) => {
 };
 
 const handleResetPassword = async (req, res) => {
+  if (!req.body || !req.body.email || !req.body.password || !req.body.otp) {
+    return res
+      .status(400)
+      .json({ message: 'Email, password, and OTP are required.' });
+  }
   const { email, password, otp } = req.body;
   const user = await User.findOne({ email });
   if (!user)
