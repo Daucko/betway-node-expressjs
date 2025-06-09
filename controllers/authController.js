@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { sendEMail } = require('../config/sendMail');
+const otpGenerator = require('otp-generator');
+const Otp = require('../models/Otp');
 
 const handleRegistration = async (req, res) => {
   const { username, email, password } = req.body;
@@ -123,35 +125,44 @@ const handleForgotPassword = async (req, res) => {
       .status(404)
       .json({ message: `User with the email ${email} not found` });
   try {
-    // send email with token to the user
-    const accessToken = jwt.sign(
-      { userId: user._id },
-      process.env.ACCESS_TOKEN,
-      {
-        expiresIn: '5m',
-      }
-    );
-
-    const message = `<h1>Here is the token to reset you password please click on the button,
-        <a class="" href='https://www.yourcareerex.com/reset-password/${accessToken}'>Reset Password </a>
-        if the button does not work for any reason, please click the link below
-        <a href='https://www.yourcareerex.com/reset-password/${accessToken}'>Reset Password </a>
-        </h1>`;
-    const subject = 'Reset Password';
+    // Generate a 6-digit numeric OTP using otp-generator
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false,
+    });
+    // Store OTP in the database with expiry (5 minutes)
+    await Otp.create({
+      email,
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      used: false,
+    });
+    const message = `<h1>Your password reset OTP is: <strong>${otp}</strong></h1>
+      <p>This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this email.</p>`;
+    const subject = 'Password Reset OTP';
     await sendEMail(email, message, subject);
-    res.status(200).json({ message: 'Please check your email inbox' });
+    res.status(200).json({ message: 'OTP sent to your email address' });
   } catch (err) {
     res.status(500).json({ message: 'Internal server issues' });
   }
 };
 
 const handleResetPassword = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, otp } = req.body;
   const user = await User.findOne({ email });
   if (!user)
     return res.status(404).json({ message: 'User account not found!' });
 
-  const hashedPassword = bcrypt.hash(password, 12);
+  // Verify OTP from database
+  const otpDoc = await Otp.findOne({ email, otp, used: false });
+  if (!otpDoc || otpDoc.expiresAt < new Date()) {
+    return res.status(400).json({ message: 'Invalid or expired OTP' });
+  }
+  otpDoc.used = true;
+  await otpDoc.save();
+
+  const hashedPassword = await bcrypt.hash(password, 12);
   user.password = hashedPassword;
   await user.save();
   res.status(200).json({ message: 'Password reset successful' });
