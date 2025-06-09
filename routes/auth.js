@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const checkIsVerified = require('../middleware/checkIsVerified');
 
 router.post('/auth/register', authController.handleRegistration);
+router.get('/auth/verify-email', authController.handleVerifyEmail);
 router.post('/auth/login', checkIsVerified, authController.handleLogin);
 router.post(
   '/auth/forgot-password',

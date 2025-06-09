@@ -1,10 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendForgetPasswordEMail = async (
-  email,
-  message,
-  subject = 'Reset Password'
-) => {
+const sendEMail = async (email, message, subject = 'Reset Password') => {
   try {
     const mailTransport = nodemailer.createTransport({
       service: 'gmail',
@@ -28,4 +24,4 @@ const sendForgetPasswordEMail = async (
   }
 };
 
-module.exports = { sendForgetPasswordEMail };
+module.exports = { sendEMail };
