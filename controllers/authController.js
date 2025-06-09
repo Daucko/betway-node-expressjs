@@ -157,7 +157,6 @@ const handleResetPassword = async (req, res) => {
   res.status(200).json({ message: 'Password reset successful' });
 };
 
-// Controller to verify email
 const handleVerifyEmail = async (req, res) => {
   const token = req.query.token;
   if (!token) {
