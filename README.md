@@ -20,6 +20,7 @@ Betwise is a backend API for a sports betting platform, built with Node.js, Expr
 - Nodemailer (Gmail SMTP)
 - JWT for authentication
 - bcryptjs for password hashing
+- otp-generator for otp generation
 
 ## Getting Started
 
