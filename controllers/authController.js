@@ -38,7 +38,7 @@ const handleRegistration = async (req, res) => {
       { expiresIn: '1d' }
     );
     const baseUrl = process.env.BASE_URL || 'https://your-app-base.com';
-    const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
     const subject = 'Welcome to Betwise! Please verify your email';
     const message = `
       <h1>Hi ${username},<br><br>
