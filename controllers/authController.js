@@ -38,7 +38,7 @@ const handleRegistration = async (req, res) => {
       { expiresIn: '1d' }
     );
     const baseUrl = process.env.BASE_URL || 'https://your-app-base.com';
-    const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
     const subject = 'Welcome to Betwise! Please verify your email';
     const message = `
       <h1>Hi ${username},<br><br>
@@ -51,6 +51,8 @@ const handleRegistration = async (req, res) => {
       The Betwise Team</h1>
     `;
     await sendEMail(email, message, subject);
+
+    console.log(baseUrl, verificationUrl);
 
     res.status(201).json({
       message: `User ${username} created successfully. Please check your email to verify your account.`,
